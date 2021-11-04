@@ -1,0 +1,170 @@
+#Liður 1
+from gpiozero
+import LED
+from time import sleep
+
+led = LED(17)
+
+while True:
+led.on()
+sleep(1)
+led.off()
+sleep(1)
+
+#liður 2
+from gpiozero import PWMLED from time import sleep
+
+led = PWMLED(17)
+
+led.pulse() pause()
+
+#liður 3
+from gpiozero import LED, Button from signal import pause
+
+led = LED(17) button = Button(26)
+
+button.when_pressed = led.on button.when_released = led.off
+
+pause()
+
+#Liður 4
+raspistill -o test.jpg
+Termnial skipun til að athuga tengingu myndvéls við raspberry pi
+
+#Liður 5
+from time import sleep
+from picamera import PiCamera
+
+camera = PiCamera()
+camera.resolution = (1024, 768)
+camera.start_preview()
+
+#Liður 6
+from gpiozero import Button
+from picamera import PiCamera
+from datetime import datetime
+from signal import pause
+
+button = Button(2)
+camera = PiCamera()
+
+def capture():
+timestamp = datetime.now().isoformat()
+#sleep(3) til að setja þriggja sekúndna timer
+camera.capture('/home/pi/%s.jpg' % timestamp)
+
+button.when_pressed = capture
+
+pause()
+
+#Liður 7
+from gpiozero import MotionSensor, LED
+from time import sleep
+
+pir = MotionSensor(4)
+led = LED(16)
+
+i = 0
+
+while True:
+
+  if pir.motion_detected
+      print("Motion Detected ", i )
+      led.on()
+  else:
+      print("No Motion ", i)
+      led.off()
+
+  i += 1
+
+  sleep(.2)
+
+#Liður 8
+import RPi.GPIO as GPIO
+import time
+import datetime
+import picamera
+import os
+import smtplib
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+
+camera = picamera.PiCamera()
+GPIO.setmode(GPIO.BCM)
+
+GPIO.setup(4, GPIO.IN) #PIR
+GPIO.setup(24, GPIO.OUT) #BUzzer
+
+''' ts = time.time()
+st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+'''
+
+COMMASPACE = ', '
+
+def Send_Email(image):
+sender = 'hjorturk@gmail.com'
+gmail_password = 'Insert gmail password'
+recipients = ['snorrimar4@icloud.com'] #Gert var í tímanum og sent á þetta email þar sem það var tilbúið að taka við.
+
+# Create the enclosing (outer) message
+outer = MIMEMultipart()
+outer['Subject'] = 'Attachment Test'
+outer['To'] = COMMASPACE.join(recipients)
+outer['From'] = sender
+outer.preamble = 'You will not see this in a MIME-aware mail reader.\n'
+
+# List of attachments
+attachments = [image]
+
+# Add the attachments to the message
+for file in attachments:
+    try:
+        with open(file, 'rb') as fp:
+            msg = MIMEBase('application', "octet-stream")
+            msg.set_payload(fp.read())
+        encoders.encode_base64(msg)
+        msg.add_header('Content-Disposition', 'attachment', filename=os.path.basename(file))
+        outer.attach(msg)
+    except:
+        print("Unable to open one of the attachments. Error: ", sys.exc_info()[0])
+        raise
+
+composed = outer.as_string()
+
+# Send the email
+try:
+    with smtplib.SMTP('smtp.gmail.com', 587) as s:
+        s.ehlo()
+        s.starttls()
+        s.ehlo()
+        s.login(sender, gmail_password)
+        s.sendmail(sender, recipients, composed)
+        s.close()
+    print("Email sent!")
+except:
+    print("Unable to send the email. Error: ", sys.exc_info()[0])
+    raise
+try:
+time.sleep(2) # to stabilize sensor
+
+while True:
+    ##Timeloop
+    ts = time.time()
+    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    if GPIO.input(4):
+        ##If loop
+        GPIO.output(24, True)
+        time.sleep(0.5) #Buzzer turns on for 0.5 sec
+        print("Motion Detected at {}".format(st))
+        ##Adds timestamp to image
+        camera.capture('image_Time_{}.jpg'.format(st))
+        image = ('image_Time_{}.jpg'.format(st))
+        Send_Email(image)
+        time.sleep(2)
+        GPIO.output(24, False)
+        time.sleep(5) #to avoid multiple detection
+
+    time.sleep(0.1) #loop delay, should be less than detection delay
+except:
+GPIO.cleanup()
